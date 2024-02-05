@@ -19,6 +19,17 @@ pub struct Stack {
 pub const STACK: Item<Stack> = Item::new("stack");
 
 #[cw_serde]
+pub struct OldStack {
+    pub admin: Addr,
+    pub stack_fee_receiver: Addr,
+    pub stack_fee_commission: Uint128,
+    pub total_stack_fee: Uint128,
+    pub pools: Vec<String>,
+    pub lsd_token_code_id: u64,
+}
+pub const OLD_STACK: Item<OldStack> = Item::new("stack");
+
+#[cw_serde]
 pub struct EraSnapshot {
     pub era: u64,
     pub bond: Uint128,
