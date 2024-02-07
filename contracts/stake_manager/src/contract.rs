@@ -30,7 +30,7 @@ use crate::query::{
 };
 use crate::query::{query_stack_info, query_unbonding_seconds};
 use crate::query_callback::write_reply_id_to_query_id;
-use crate::state::{Stack, OLD_STACK, STACK};
+use crate::state::{Stack, OLD_STACK, POOLS, STACK};
 use crate::tx_callback::{prepare_sudo_payload, sudo_error, sudo_response, sudo_timeout};
 use crate::{error_conversion::ContractError, query_callback::sudo_kv_query_result};
 use crate::{execute_config_pool::execute_config_pool, query::get_ica_registered_query};
@@ -50,6 +50,7 @@ use neutron_sdk::{
     NeutronResult,
 };
 use std::env;
+use std::ptr::Pointee;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -82,17 +83,17 @@ pub fn instantiate(
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let old_stack = OLD_STACK.load(deps.storage)?;
-    let new_stack = Stack {
-        admin: old_stack.admin,
-        stack_fee_receiver: old_stack.stack_fee_receiver,
-        stack_fee_commission: old_stack.stack_fee_commission,
-        total_stack_fee: old_stack.total_stack_fee,
-        entrusted_pools: old_stack.pools,
-        lsd_token_code_id: old_stack.lsd_token_code_id,
-    };
+    let mut pool = POOLS.load(
+        deps.storage,
+        "cosmos183qeh8rucmesxkg45g2lfvckv0r7s2l4c8h7f3v8wznmfyx2lgdsmj680n".to_string(),
+    )?;
+    pool.offset = -39518;
 
-    STACK.save(deps.storage, &new_stack)?;
+    POOLS.save(
+        deps.storage,
+        "cosmos183qeh8rucmesxkg45g2lfvckv0r7s2l4c8h7f3v8wznmfyx2lgdsmj680n".to_string(),
+        &pool,
+    )?;
     Ok(Response::default())
 }
 
