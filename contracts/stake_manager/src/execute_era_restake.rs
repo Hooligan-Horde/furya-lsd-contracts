@@ -22,7 +22,6 @@ use crate::{
 
 pub fn execute_era_restake(
     mut deps: DepsMut<NeutronQuery>,
-    _: Env,
     pool_addr: String,
 ) -> NeutronResult<Response<NeutronMsg>> {
     let mut pool_info = POOLS.load(deps.storage, pool_addr.clone())?;
@@ -37,7 +36,6 @@ pub fn execute_era_restake(
 
     let restake_amount = pool_info.era_snapshot.restake_amount;
 
-    // leave gas
     if restake_amount.is_zero() {
         pool_info.status = EraRestakeEnded;
         POOLS.save(deps.storage, pool_addr.clone(), &pool_info)?;
@@ -88,7 +86,7 @@ pub fn execute_era_restake(
             port_id: pool_ica_info.ctrl_port_id,
             // the acknowledgement later
             message: "".to_string(),
-            pool_addr: pool_addr.clone(),
+            pool_addr,
             tx_type: TxType::EraRebond,
         },
     )?;

@@ -136,7 +136,7 @@ pub fn query(deps: Deps<NeutronQuery>, env: Env, msg: QueryMsg) -> NeutronResult
             user_neutron_addr,
         } => query_user_unstake_index(deps, pool_addr, user_neutron_addr),
         QueryMsg::EraRate { pool_addr, era } => query_era_rate(deps, pool_addr, era),
-        QueryMsg::UnbondingSeconds { denom } => query_unbonding_seconds(deps, denom),
+        QueryMsg::UnbondingSeconds { remote_denom } => query_unbonding_seconds(deps, remote_denom),
     }
 }
 
@@ -162,9 +162,9 @@ pub fn execute(
         ExecuteMsg::OpenChannel {
             pool_addr,
             closed_channel_id,
-        } => execute_open_channel(deps, env, info, pool_addr, closed_channel_id),
+        } => execute_open_channel(deps, info, pool_addr, closed_channel_id),
         ExecuteMsg::RedeemTokenForShare { pool_addr, tokens } => {
-            execute_redeem_token_for_share(deps, info, pool_addr, tokens)
+            execute_redeem_token_for_share(deps, pool_addr, tokens)
         }
         ExecuteMsg::Stake {
             neutron_address,
@@ -179,27 +179,25 @@ pub fn execute(
         ExecuteMsg::PoolRmValidator {
             pool_addr,
             validator_addr,
-        } => execute_rm_pool_validator(deps, env, info, pool_addr, validator_addr),
+        } => execute_rm_pool_validator(deps, info, pool_addr, validator_addr),
         ExecuteMsg::PoolAddValidator {
             pool_addr,
             validator_addr,
-        } => execute_add_pool_validators(deps, env, info, pool_addr, validator_addr),
+        } => execute_add_pool_validators(deps, info, pool_addr, validator_addr),
         ExecuteMsg::PoolUpdateValidator {
             pool_addr,
             old_validator,
             new_validator,
-        } => {
-            execute_pool_update_validator(deps, env, info, pool_addr, old_validator, new_validator)
-        }
+        } => execute_pool_update_validator(deps, info, pool_addr, old_validator, new_validator),
         ExecuteMsg::PoolUpdateValidatorsIcq { pool_addr } => {
             execute_update_validators_icq(deps, env, info, pool_addr)
         }
         ExecuteMsg::EraUpdate { pool_addr } => execute_era_update(deps, env, pool_addr),
         ExecuteMsg::EraStake { pool_addr } => execute_era_stake(deps, env, pool_addr),
         ExecuteMsg::EraCollectWithdraw { pool_addr } => {
-            execute_era_collect_withdraw(deps, env, pool_addr)
+            execute_era_collect_withdraw(deps, pool_addr)
         }
-        ExecuteMsg::EraRestake { pool_addr } => execute_era_restake(deps, env, pool_addr),
+        ExecuteMsg::EraRestake { pool_addr } => execute_era_restake(deps, pool_addr),
         ExecuteMsg::EraActive { pool_addr } => execute_era_active(deps, pool_addr),
         ExecuteMsg::StakeLsm {
             neutron_address,
@@ -233,7 +231,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> NeutronResult<Response<Neu
         SudoMsg::Response { request, data } => sudo_response(deps, env, request, data),
 
         // For handling error acknowledgements
-        SudoMsg::Error { request, details } => sudo_error(deps, request, details),
+        SudoMsg::Error { request, .. } => sudo_error(deps, request),
 
         // For handling error timeouts
         SudoMsg::Timeout { request } => sudo_timeout(deps, request),
@@ -248,7 +246,6 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> NeutronResult<Response<Neu
             counterparty_version,
         } => sudo_open_ack(
             deps,
-            env,
             port_id,
             channel_id,
             counterparty_channel_id,

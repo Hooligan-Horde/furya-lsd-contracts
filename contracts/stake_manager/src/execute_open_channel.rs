@@ -1,6 +1,6 @@
 use std::vec;
 
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 use neutron_sdk::{
     bindings::{msg::NeutronMsg, query::NeutronQuery},
@@ -15,15 +15,12 @@ use crate::{
 
 pub fn execute_open_channel(
     deps: DepsMut<NeutronQuery>,
-    _: Env,
     info: MessageInfo,
     pool_addr: String,
     closed_channel_id: String,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let pool_info = POOLS.load(deps.as_ref().storage, pool_addr)?;
-    if info.sender != pool_info.admin {
-        return Err(ContractError::Unauthorized {}.into());
-    }
+    let pool_info = POOLS.load(deps.storage, pool_addr)?;
+    pool_info.authorize(&info.sender)?;
 
     let mut msgs = vec![];
 

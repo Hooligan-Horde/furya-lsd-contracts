@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 use neutron_sdk::{
     bindings::{msg::NeutronMsg, query::NeutronQuery},
@@ -6,24 +6,18 @@ use neutron_sdk::{
 };
 
 use crate::helper::deal_validators_icq_update;
-use crate::state::{EraStatus, INFO_OF_ICA_ID, POOLS};
+use crate::state::{INFO_OF_ICA_ID, POOLS};
 use crate::{error_conversion::ContractError, helper};
 
 pub fn execute_add_pool_validators(
     deps: DepsMut<NeutronQuery>,
-    _: Env,
     info: MessageInfo,
     pool_addr: String,
     validator_addr: String,
 ) -> NeutronResult<Response<NeutronMsg>> {
     let mut pool_info = POOLS.load(deps.storage, pool_addr.clone())?;
-
-    if info.sender != pool_info.admin {
-        return Err(ContractError::Unauthorized {}.into());
-    }
-    if pool_info.status != EraStatus::ActiveEnded {
-        return Err(ContractError::EraProcessNotEnd {}.into());
-    }
+    pool_info.authorize(&info.sender)?;
+    pool_info.require_era_ended()?;
 
     if pool_info.validator_addrs.len() >= helper::VALIDATORS_LEN_LIMIT {
         return Err(ContractError::ValidatorAddressesListSize {}.into());

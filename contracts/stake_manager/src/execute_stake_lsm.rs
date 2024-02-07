@@ -3,7 +3,7 @@ use crate::{
     helper::DEFAULT_TIMEOUT_SECONDS,
     helper::{min_ntrn_ibc_fee, query_denom_trace_from_ibc_denom, CAL_BASE},
     query::query_validator_by_addr,
-    state::{EraStatus, SudoPayload, TxType, ValidatorUpdateStatus, INFO_OF_ICA_ID, POOLS},
+    state::{SudoPayload, TxType, INFO_OF_ICA_ID, POOLS},
     tx_callback::msg_with_sudo_callback,
 };
 use cosmwasm_std::{
@@ -35,12 +35,8 @@ pub fn execute_stake_lsm(
     if pool_info.share_tokens.len() >= pool_info.lsm_pending_limit as usize {
         return Err(ContractError::LsmPendingStakeOverLimit {}.into());
     }
-    if pool_info.status != EraStatus::ActiveEnded {
-        return Err(ContractError::EraProcessNotEnd {}.into());
-    }
-    if pool_info.validator_update_status != ValidatorUpdateStatus::End {
-        return Err(ContractError::PoolIcqNotUpdated {}.into());
-    }
+    pool_info.require_era_ended()?;
+    pool_info.require_update_validator_ended()?;
 
     let (pool_ica_info, _, _) = INFO_OF_ICA_ID.load(deps.storage, pool_info.ica_id.clone())?;
     if pool_info.paused {
@@ -206,10 +202,7 @@ pub fn sudo_stake_lsm_callback(
         .add_attribute("lsd_token_amount", lsd_token_amount))
 }
 
-pub fn sudo_stake_lsm_failed_callback(
-    _: DepsMut,
-    payload: SudoPayload,
-) -> NeutronResult<Response<NeutronMsg>> {
+pub fn sudo_stake_lsm_failed_callback(payload: SudoPayload) -> NeutronResult<Response<NeutronMsg>> {
     let parts: Vec<String> = payload.message.split('_').map(String::from).collect();
     if parts.len() != 5 {
         return Err(ContractError::UnsupportedMessage(payload.message).into());
