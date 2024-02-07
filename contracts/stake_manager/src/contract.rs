@@ -30,7 +30,7 @@ use crate::query::{
 };
 use crate::query::{query_stack_info, query_unbonding_seconds};
 use crate::query_callback::write_reply_id_to_query_id;
-use crate::state::{Stack, OLD_STACK, POOLS, STACK};
+use crate::state::{Stack, POOLS, STACK};
 use crate::tx_callback::{prepare_sudo_payload, sudo_error, sudo_response, sudo_timeout};
 use crate::{error_conversion::ContractError, query_callback::sudo_kv_query_result};
 use crate::{execute_config_pool::execute_config_pool, query::get_ica_registered_query};
@@ -50,7 +50,6 @@ use neutron_sdk::{
     NeutronResult,
 };
 use std::env;
-use std::ptr::Pointee;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
