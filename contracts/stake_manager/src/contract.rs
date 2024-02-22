@@ -17,7 +17,8 @@ use crate::execute_stake_lsm::execute_stake_lsm;
 use crate::execute_unstake::execute_unstake;
 use crate::execute_withdraw::execute_withdraw;
 use crate::helper::{
-    QUERY_REPLY_ID_RANGE_END, QUERY_REPLY_ID_RANGE_START, REPLY_ID_RANGE_END, REPLY_ID_RANGE_START,
+    DEFAULT_RATE, QUERY_REPLY_ID_RANGE_END, QUERY_REPLY_ID_RANGE_START, REPLY_ID_RANGE_END,
+    REPLY_ID_RANGE_START,
 };
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::query::query_era_snapshot;
@@ -30,7 +31,7 @@ use crate::query::{
 };
 use crate::query::{query_stack_info, query_unbonding_seconds};
 use crate::query_callback::write_reply_id_to_query_id;
-use crate::state::{Stack, POOLS, STACK};
+use crate::state::{Stack, ERA_RATE, STACK};
 use crate::tx_callback::{prepare_sudo_payload, sudo_error, sudo_response, sudo_timeout};
 use crate::{error_conversion::ContractError, query_callback::sudo_kv_query_result};
 use crate::{execute_config_pool::execute_config_pool, query::get_ica_registered_query};
@@ -82,17 +83,15 @@ pub fn instantiate(
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let mut pool = POOLS.load(
+    ERA_RATE.save(
         deps.storage,
-        "cosmos183qeh8rucmesxkg45g2lfvckv0r7s2l4c8h7f3v8wznmfyx2lgdsmj680n".to_string(),
+        (
+            "cosmos193sx2unjy8u8kyrg247k7evcanmcktk88shv934066wlhm7aqljsng9593".to_string(),
+            0,
+        ),
+        &DEFAULT_RATE,
     )?;
-    pool.offset = -39518;
 
-    POOLS.save(
-        deps.storage,
-        "cosmos183qeh8rucmesxkg45g2lfvckv0r7s2l4c8h7f3v8wznmfyx2lgdsmj680n".to_string(),
-        &pool,
-    )?;
     Ok(Response::default())
 }
 
