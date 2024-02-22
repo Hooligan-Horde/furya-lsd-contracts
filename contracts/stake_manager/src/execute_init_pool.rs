@@ -1,6 +1,6 @@
 use crate::helper::{
     self, deal_pool, min_ntrn_ibc_fee, query_icq_register_fee, set_withdraw_sub_msg,
-    total_icq_register_fee, CAL_BASE, DEFAULT_ERA_SECONDS,
+    total_icq_register_fee, DEFAULT_ERA_SECONDS, DEFAULT_RATE,
 };
 use crate::msg::InitPoolParams;
 use crate::state::POOLS;
@@ -15,7 +15,7 @@ use neutron_sdk::{
     NeutronResult,
 };
 use std::ops::{Add, Div, Mul};
-use std::vec;
+use std::{env, vec};
 
 // add execute to config the validator addrs and withdraw address on reply
 pub fn execute_init_pool(
@@ -89,8 +89,7 @@ pub fn execute_init_pool(
     pool_info.bond = Uint128::zero();
     pool_info.unbond = Uint128::zero();
     pool_info.active = Uint128::zero();
-    pool_info.rate = CAL_BASE;
-    pool_info.era_seconds = DEFAULT_ERA_SECONDS;
+    pool_info.rate = DEFAULT_RATE;
     pool_info.share_tokens = vec![];
     pool_info.total_platform_fee = Uint128::zero();
     pool_info.total_lsd_token_amount = Uint128::zero();
@@ -103,14 +102,20 @@ pub fn execute_init_pool(
     pool_info.rate_change_limit = Uint128::zero();
     pool_info.validator_update_status = ValidatorUpdateStatus::End;
 
+    if env!("PROFILE") == "debug" {
+        pool_info.era_seconds = 20; // for testing purpose
+    } else {
+        pool_info.era_seconds = DEFAULT_ERA_SECONDS;
+    }
+
     // cal
     let offset = env.block.time.seconds().div(pool_info.era_seconds);
     pool_info.offset = 0 - (offset as i64);
 
     let unbonding_seconds = UNBONDING_SECONDS.load(deps.storage, pool_info.remote_denom.clone())?;
-    pool_info.unbonding_period = ((unbonding_seconds as f64)
+    pool_info.unbonding_period = (unbonding_seconds as f64)
         .div(pool_info.era_seconds as f64)
-        .ceil() as u64)
+        .ceil() as u64
         + 1;
 
     let code_id = match param.lsd_code_id {

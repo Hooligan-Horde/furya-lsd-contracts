@@ -1,6 +1,6 @@
 use std::ops::Div;
 
-use cosmwasm_std::{Addr, Coin, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -10,14 +10,11 @@ use neutron_sdk::{
     NeutronResult,
 };
 
+use crate::error_conversion::ContractError;
 use crate::helper;
 use crate::{
-    error_conversion::ContractError,
-    state::{EraSnapshot, ValidatorUpdateStatus},
-};
-use crate::{
     helper::{get_withdraw_ica_id, ICA_WITHDRAW_SUFIX, INTERCHAIN_ACCOUNT_ID_LEN_LIMIT},
-    state::{EraStatus, IcaInfo, PoolInfo, INFO_OF_ICA_ID, POOLS},
+    state::{IcaInfo, PoolInfo, INFO_OF_ICA_ID, POOLS},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -84,19 +81,13 @@ pub fn execute_register_pool(
         &(
             IcaInfo {
                 ctrl_connection_id: connection_id.clone(),
-                host_connection_id: "".to_string(),
-                ctrl_channel_id: "".to_string(),
-                host_channel_id: "".to_string(),
                 ctrl_port_id: ctrl_port_id_of_pool,
-                ica_addr: "".to_string(),
+                ..Default::default()
             },
             IcaInfo {
                 ctrl_connection_id: connection_id.clone(),
-                host_connection_id: "".to_string(),
-                ctrl_channel_id: "".to_string(),
-                host_channel_id: "".to_string(),
                 ctrl_port_id: ctrl_port_id_of_withdraw,
-                ica_addr: "".to_string(),
+                ..Default::default()
             },
             info.sender,
         ),
@@ -108,18 +99,18 @@ pub fn execute_register_pool(
 // handler register pool
 pub fn sudo_open_ack(
     deps: DepsMut,
-    port_id: String,
-    _channel_id: String,
-    _counterparty_channel_id: String,
+    ctrl_port_id: String,
+    ctrl_channel_id: String,
+    counterparty_channel_id: String,
     counterparty_version: String,
 ) -> NeutronResult<Response<NeutronMsg>> {
     // The version variable contains a JSON value with multiple fields,
     // including the generated account address.
-    let parsed_version: OpenAckVersion =
+    let counterparty_version: OpenAckVersion =
         serde_json_wasm::from_str(counterparty_version.as_str())
             .map_err(|_| ContractError::CantParseCounterpartyVersion {})?;
 
-    let port_id_parts: Vec<String> = port_id.split('.').map(String::from).collect();
+    let port_id_parts: Vec<String> = ctrl_port_id.split('.').map(String::from).collect();
     if port_id_parts.len() != 2 {
         return Err(ContractError::CounterpartyVersionNotMatch {}.into());
     }
@@ -140,17 +131,17 @@ pub fn sudo_open_ack(
         INFO_OF_ICA_ID.load(deps.storage, ica_id.clone())?;
 
     if is_pool {
-        pool_ica_info.ctrl_channel_id = _channel_id;
-        pool_ica_info.ctrl_port_id = port_id;
-        pool_ica_info.host_connection_id = parsed_version.host_connection_id;
-        pool_ica_info.host_channel_id = _counterparty_channel_id;
-        pool_ica_info.ica_addr = parsed_version.address;
+        pool_ica_info.ctrl_channel_id = ctrl_channel_id;
+        pool_ica_info.ctrl_port_id = ctrl_port_id;
+        pool_ica_info.host_connection_id = counterparty_version.host_connection_id;
+        pool_ica_info.host_channel_id = counterparty_channel_id;
+        pool_ica_info.ica_addr = counterparty_version.address;
     } else {
-        withdraw_ica_info.ctrl_channel_id = _channel_id;
-        withdraw_ica_info.ctrl_port_id = port_id;
-        withdraw_ica_info.host_connection_id = parsed_version.host_connection_id;
-        withdraw_ica_info.host_channel_id = _counterparty_channel_id;
-        withdraw_ica_info.ica_addr = parsed_version.address;
+        withdraw_ica_info.ctrl_channel_id = ctrl_channel_id;
+        withdraw_ica_info.ctrl_port_id = ctrl_port_id;
+        withdraw_ica_info.host_connection_id = counterparty_version.host_connection_id;
+        withdraw_ica_info.host_channel_id = counterparty_channel_id;
+        withdraw_ica_info.ica_addr = counterparty_version.address;
     }
 
     if !pool_ica_info.ica_addr.is_empty()
@@ -158,45 +149,9 @@ pub fn sudo_open_ack(
         && !POOLS.has(deps.storage, pool_ica_info.ica_addr.clone())
     {
         let pool_info = PoolInfo {
-            bond: Uint128::zero(),
-            unbond: Uint128::zero(),
-            active: Uint128::zero(),
-            lsd_token: Addr::unchecked(""),
             ica_id: ica_id.clone(),
-            ibc_denom: "".to_string(),
-            channel_id_of_ibc_denom: "".to_string(),
-            remote_denom: "".to_string(),
-            validator_addrs: vec![],
-            era: 0,
-            rate: Uint128::zero(),
-            minimal_stake: Uint128::zero(),
-            unstake_times_limit: 0,
-            next_unstake_index: 0,
-            unbonding_period: 0,
-            status: EraStatus::RegisterEnded,
-            validator_update_status: ValidatorUpdateStatus::End,
-            platform_fee_commission: Uint128::zero(),
-            total_platform_fee: Uint128::zero(),
-            total_lsd_token_amount: Uint128::zero(),
-            unbond_commission: Uint128::zero(),
-            platform_fee_receiver: Addr::unchecked(""),
             admin: admin.clone(),
-            era_seconds: 0,
-            offset: 0,
-            share_tokens: vec![],
-            redeemming_share_token_denom: vec![],
-            era_snapshot: EraSnapshot {
-                era: 0,
-                bond: Uint128::zero(),
-                unbond: Uint128::zero(),
-                active: Uint128::zero(),
-                restake_amount: Uint128::zero(),
-                last_step_height: 0,
-            },
-            paused: false,
-            lsm_support: false,
-            lsm_pending_limit: 0,
-            rate_change_limit: Uint128::zero(),
+            ..Default::default()
         };
 
         POOLS.save(deps.storage, pool_ica_info.ica_addr.clone(), &pool_info)?;

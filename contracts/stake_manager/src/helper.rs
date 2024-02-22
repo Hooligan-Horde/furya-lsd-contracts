@@ -24,7 +24,7 @@ use neutron_sdk::NeutronError;
 use neutron_sdk::NeutronResult;
 
 use crate::query_callback::register_query_submsg;
-use crate::state::{IcaInfo, PoolInfo, QueryKind, SudoPayload, TxType, POOLS};
+use crate::state::{IcaInfo, PoolInfo, QueryKind, SudoPayload, TxType, ERA_RATE, POOLS};
 use crate::state::{ADDRESS_TO_REPLY_ID, INFO_OF_ICA_ID, REPLY_ID_TO_QUERY_ID};
 use crate::tx_callback::msg_with_sudo_callback;
 use crate::{error_conversion::ContractError, state::EraStatus};
@@ -33,8 +33,9 @@ pub const FEE_DENOM: &str = "untrn";
 pub const ICA_WITHDRAW_SUFIX: &str = "-withdraw_addr";
 pub const INTERCHAIN_ACCOUNT_ID_LEN_LIMIT: usize = 16;
 pub const CAL_BASE: Uint128 = Uint128::new(1_000_000);
+pub const DEFAULT_RATE: Uint128 = Uint128::new(1_000_000);
 pub const DEFAULT_DECIMALS: u8 = 6;
-pub const DEFAULT_ERA_SECONDS: u64 = 86400; //24h
+pub const DEFAULT_ERA_SECONDS: u64 = 86400; // 24h
 pub const MIN_ERA_SECONDS: u64 = 28800; //8h
 pub const MAX_ERA_SECONDS: u64 = 86400; //24h
 pub const VALIDATORS_LEN_LIMIT: usize = 16;
@@ -348,6 +349,11 @@ pub fn deal_pool(
     };
 
     POOLS.save(deps.storage, pool_ica_info.ica_addr.clone(), &pool_info)?;
+    ERA_RATE.save(
+        deps.storage,
+        (pool_ica_info.ica_addr.clone(), pool_info.era),
+        &pool_info.rate,
+    )?;
 
     let register_balance_pool_submsg = register_query_submsg(
         deps.branch(),
