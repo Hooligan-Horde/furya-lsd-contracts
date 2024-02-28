@@ -30,7 +30,7 @@ use crate::query::{
 };
 use crate::query::{query_stack_info, query_unbonding_seconds};
 use crate::query_callback::write_reply_id_to_query_id;
-use crate::state::{Stack, STACK, STACK_OLD, TOTAL_STACK_FEE};
+use crate::state::{Stack, STACK, TOTAL_STACK_FEE};
 use crate::tx_callback::{prepare_sudo_payload, sudo_error, sudo_response, sudo_timeout};
 use crate::{error_conversion::ContractError, query_callback::sudo_kv_query_result};
 use crate::{execute_config_pool::execute_config_pool, query::get_ica_registered_query};
@@ -81,48 +81,10 @@ pub fn instantiate(
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let old_stack = STACK_OLD.load(deps.storage)?;
-
-    STACK.save(
-        deps.storage,
-        &Stack {
-            admin: old_stack.admin,
-            stack_fee_receiver: old_stack.stack_fee_receiver,
-            stack_fee_commission: old_stack.stack_fee_commission,
-            entrusted_pools: old_stack.entrusted_pools,
-            lsd_token_code_id: old_stack.lsd_token_code_id,
-        },
-    )?;
-
-    TOTAL_STACK_FEE.save(
-        deps.storage,
-        "cosmos132r6sxd6hrmyt8dnce6wymv4haezds5y3lkmghlwyh0t97s0psrqxmtdtd".to_string(),
-        &Uint128::new(0),
-    )?;
-    TOTAL_STACK_FEE.save(
-        deps.storage,
-        "cosmos16eafwuced6w9q37s6tj4r4kkz5p0l96uwmfv3ghd9acwh78ss7dq2tym07".to_string(),
-        &Uint128::new(0),
-    )?;
-    TOTAL_STACK_FEE.save(
-        deps.storage,
-        "cosmos17n0n04nsefgkjer0t2j97cqfpyt0vpnewp8xmk8r70rzryfxxtmq3350af".to_string(),
-        &Uint128::new(2433),
-    )?;
-    TOTAL_STACK_FEE.save(
-        deps.storage,
-        "cosmos183qeh8rucmesxkg45g2lfvckv0r7s2l4c8h7f3v8wznmfyx2lgdsmj680n".to_string(),
-        &Uint128::new(2047),
-    )?;
     TOTAL_STACK_FEE.save(
         deps.storage,
         "cosmos193sx2unjy8u8kyrg247k7evcanmcktk88shv934066wlhm7aqljsng9593".to_string(),
-        &Uint128::new(209857598),
-    )?;
-    TOTAL_STACK_FEE.save(
-        deps.storage,
-        "cosmos1d5mglupykg3qc84m425nsjjp8upzfljhh06cx4tweexpnqs2sy3swy53ut".to_string(),
-        &Uint128::new(0),
+        &Uint128::new(11170),
     )?;
 
     Ok(Response::default())

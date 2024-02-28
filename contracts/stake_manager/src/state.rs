@@ -28,18 +28,6 @@ impl Stack {
 
 pub const STACK: Item<Stack> = Item::new("stack");
 
-#[cw_serde]
-pub struct StackOld {
-    pub admin: Addr,
-    pub stack_fee_receiver: Addr,
-    pub stack_fee_commission: Uint128,
-    pub total_stack_fee: Uint128,
-    pub entrusted_pools: Vec<String>,
-    pub lsd_token_code_id: u64,
-}
-
-pub const STACK_OLD: Item<StackOld> = Item::new("stack");
-
 pub const TOTAL_STACK_FEE: Map<String, Uint128> = Map::new("total_stack_fee");
 
 #[cw_serde]
