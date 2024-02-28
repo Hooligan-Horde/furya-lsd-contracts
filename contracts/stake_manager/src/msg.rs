@@ -8,7 +8,7 @@ use neutron_sdk::{
     },
 };
 
-use crate::state::{EraSnapshot, IcaInfo, PoolInfo, QueryKind, Stack, UnstakeInfo};
+use crate::state::{EraSnapshot, IcaInfo, IcaInfos, PoolInfo, QueryKind, Stack, UnstakeInfo};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -36,6 +36,8 @@ pub enum QueryMsg {
     PoolInfo { pool_addr: String },
     #[returns(Stack)]
     StackInfo {},
+    #[returns(Uint128)]
+    TotalStackFee { pool_addr: String },
     #[returns(EraSnapshot)]
     EraSnapshot { pool_addr: String },
     /// this query goes to neutron and get stored ICA with a specific query
@@ -45,7 +47,7 @@ pub enum QueryMsg {
         connection_id: String,
     },
     // this query returns ICA from contract store, which saved from acknowledgement
-    #[returns((IcaInfo, IcaInfo, Addr))]
+    #[returns(IcaInfos)]
     InterchainAccountAddressFromContract { interchain_account_id: String },
     #[returns([UnstakeInfo])]
     UserUnstake {
@@ -71,7 +73,7 @@ pub struct InitPoolParams {
     pub remote_denom: String,
     pub validator_addrs: Vec<String>,
     pub platform_fee_receiver: String,
-    pub lsd_code_id: Option<u64>,
+    pub lsd_token_code_id: Option<u64>,
     pub lsd_token_name: String,
     pub lsd_token_symbol: String,
     pub minimal_stake: Uint128,

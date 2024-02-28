@@ -1,4 +1,6 @@
-use crate::state::{QueryKind, ERA_RATE, INFO_OF_ICA_ID, UNBONDING_SECONDS};
+use crate::state::{
+    IcaInfos, QueryKind, ERA_RATE, INFO_OF_ICA_ID, TOTAL_STACK_FEE, UNBONDING_SECONDS,
+};
 use crate::state::{ADDRESS_TO_REPLY_ID, STACK};
 use crate::state::{POOLS, REPLY_ID_TO_QUERY_ID, UNSTAKES_INDEX_FOR_USER, UNSTAKES_OF_INDEX};
 use cosmwasm_std::{to_json_binary, Addr, Binary, Deps, Env};
@@ -158,6 +160,12 @@ pub fn query_stack_info(deps: Deps<NeutronQuery>) -> NeutronResult<Binary> {
     Ok(to_json_binary(&stack_info)?)
 }
 
+pub fn query_total_stack_fee(deps: Deps<NeutronQuery>, pool_addr: String) -> NeutronResult<Binary> {
+    Ok(to_json_binary(
+        &TOTAL_STACK_FEE.load(deps.storage, pool_addr)?,
+    )?)
+}
+
 pub fn query_era_snapshot(
     deps: Deps<NeutronQuery>,
     _env: Env,
@@ -192,8 +200,13 @@ pub fn query_interchain_address_contract(
     _: Env,
     interchain_account_id: String,
 ) -> NeutronResult<Binary> {
-    let res = INFO_OF_ICA_ID.may_load(deps.storage, interchain_account_id)?;
-    Ok(to_json_binary(&res)?)
+    let (pool, withdraw, admin) = INFO_OF_ICA_ID.load(deps.storage, interchain_account_id)?;
+    let ica_info = IcaInfos {
+        pool_address_ica_info: pool,
+        withdraw_address_ica_info: withdraw,
+        admin,
+    };
+    Ok(to_json_binary(&ica_info)?)
 }
 
 /// Queries registered query info by ica address and query kind

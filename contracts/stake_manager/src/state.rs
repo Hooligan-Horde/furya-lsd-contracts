@@ -13,7 +13,6 @@ pub struct Stack {
     pub admin: Addr,
     pub stack_fee_receiver: Addr,
     pub stack_fee_commission: Uint128,
-    pub total_stack_fee: Uint128,
     pub entrusted_pools: Vec<String>,
     pub lsd_token_code_id: u64,
 }
@@ -28,6 +27,8 @@ impl Stack {
 }
 
 pub const STACK: Item<Stack> = Item::new("stack");
+
+pub const TOTAL_STACK_FEE: Map<String, Uint128> = Map::new("total_stack_fee");
 
 #[cw_serde]
 pub struct OldStack {
@@ -198,6 +199,14 @@ pub struct UnstakeInfo {
 
 // (poolAddress,unstakeIndex)
 pub const UNSTAKES_OF_INDEX: Map<(String, u64), UnstakeInfo> = Map::new("unstakes_of_index");
+
+// for rpc query
+#[cw_serde]
+pub struct IcaInfos {
+    pub pool_address_ica_info: IcaInfo,
+    pub withdraw_address_ica_info: IcaInfo,
+    pub admin: Addr,
+}
 
 #[cw_serde]
 pub struct IcaInfo {
