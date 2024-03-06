@@ -197,6 +197,15 @@ pub struct IcaInfos {
     pub admin: Addr,
 }
 
+// for rpc query
+#[cw_serde]
+pub struct QueryIds {
+    pub withdraw_balance_query_id: u64,
+    pub pool_balance_query_id: u64,
+    pub pool_delegations_query_id: u64,
+    pub pool_validators_query_id: u64,
+}
+
 #[cw_serde]
 pub struct IcaInfo {
     pub ctrl_connection_id: String,
@@ -354,6 +363,9 @@ pub const ERA_RATE: Map<(String, u64), Uint128> = Map::new("era_rate");
 
 // denom -> unbonding_seconds
 pub const UNBONDING_SECONDS: Map<String, u64> = Map::new("unbonding_seconds");
+
+// denom -> decimals
+pub const DECIMALS: Map<String, u8> = Map::new("decimals");
 
 #[cfg(test)]
 mod tests {

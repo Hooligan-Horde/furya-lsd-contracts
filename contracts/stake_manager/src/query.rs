@@ -1,5 +1,6 @@
 use crate::state::{
-    IcaInfos, QueryKind, ERA_RATE, INFO_OF_ICA_ID, TOTAL_STACK_FEE, UNBONDING_SECONDS,
+    IcaInfos, QueryIds, QueryKind, DECIMALS, ERA_RATE, INFO_OF_ICA_ID, TOTAL_STACK_FEE,
+    UNBONDING_SECONDS,
 };
 use crate::state::{ADDRESS_TO_REPLY_ID, STACK};
 use crate::state::{POOLS, REPLY_ID_TO_QUERY_ID, UNSTAKES_INDEX_FOR_USER, UNSTAKES_OF_INDEX};
@@ -61,13 +62,56 @@ pub fn query_era_rate(
     )?)
 }
 
+pub fn query_ids(deps: Deps<NeutronQuery>, pool_addr: String) -> NeutronResult<Binary> {
+    let pool_info = POOLS.load(deps.storage, pool_addr.clone())?;
+    let (_, withdraw, _) = INFO_OF_ICA_ID.load(deps.storage, pool_info.ica_id)?;
+
+    let withdraw_balance_reply_id = ADDRESS_TO_REPLY_ID.load(
+        deps.storage,
+        (withdraw.ica_addr, QueryKind::Balances.to_string()),
+    )?;
+    let withdraw_balance_query_id =
+        REPLY_ID_TO_QUERY_ID.load(deps.storage, withdraw_balance_reply_id)?;
+
+    let pool_balance_reply_id = ADDRESS_TO_REPLY_ID.load(
+        deps.storage,
+        (pool_addr.clone(), QueryKind::Balances.to_string()),
+    )?;
+    let pool_balance_query_id = REPLY_ID_TO_QUERY_ID.load(deps.storage, pool_balance_reply_id)?;
+
+    let pool_delegations_reply_id = ADDRESS_TO_REPLY_ID.load(
+        deps.storage,
+        (pool_addr.clone(), QueryKind::Delegations.to_string()),
+    )?;
+    let pool_delegations_query_id =
+        REPLY_ID_TO_QUERY_ID.load(deps.storage, pool_delegations_reply_id)?;
+
+    let pool_validators_reply_id = ADDRESS_TO_REPLY_ID.load(
+        deps.storage,
+        (pool_addr.clone(), QueryKind::Validators.to_string()),
+    )?;
+    let pool_validators_query_id =
+        REPLY_ID_TO_QUERY_ID.load(deps.storage, pool_validators_reply_id)?;
+
+    Ok(to_json_binary(&QueryIds {
+        withdraw_balance_query_id,
+        pool_balance_query_id,
+        pool_delegations_query_id,
+        pool_validators_query_id,
+    })?)
+}
+
 pub fn query_unbonding_seconds(
     deps: Deps<NeutronQuery>,
-    rename_denom: String,
+    remote_denom: String,
 ) -> NeutronResult<Binary> {
     Ok(to_json_binary(
-        &UNBONDING_SECONDS.may_load(deps.storage, rename_denom)?,
+        &UNBONDING_SECONDS.load(deps.storage, remote_denom)?,
     )?)
+}
+
+pub fn query_decimals(deps: Deps<NeutronQuery>, remote_denom: String) -> NeutronResult<Binary> {
+    Ok(to_json_binary(&DECIMALS.load(deps.storage, remote_denom)?)?)
 }
 
 pub fn query_balance_by_addr(

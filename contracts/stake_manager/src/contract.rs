@@ -1,3 +1,4 @@
+use crate::execute_config_decimals::execute_config_decimals;
 use crate::execute_config_unbonding_seconds::execute_config_unbonding_seconds;
 use crate::execute_era_active::execute_era_active;
 use crate::execute_era_collect_withdraw::execute_era_collect_withdraw;
@@ -20,10 +21,10 @@ use crate::helper::{
     QUERY_REPLY_ID_RANGE_END, QUERY_REPLY_ID_RANGE_START, REPLY_ID_RANGE_END, REPLY_ID_RANGE_START,
 };
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use crate::query::query_user_unstake_index;
-use crate::query::{query_balance_by_addr, query_validator_by_addr};
+use crate::query::{query_balance_by_addr, query_decimals, query_validator_by_addr};
 use crate::query::{query_delegation_by_addr, query_era_rate};
 use crate::query::{query_era_snapshot, query_total_stack_fee};
+use crate::query::{query_ids, query_user_unstake_index};
 use crate::query::{
     query_interchain_address, query_interchain_address_contract, query_pool_info,
     query_user_unstake,
@@ -132,6 +133,8 @@ pub fn query(deps: Deps<NeutronQuery>, env: Env, msg: QueryMsg) -> NeutronResult
         } => query_user_unstake_index(deps, pool_addr, user_neutron_addr),
         QueryMsg::EraRate { pool_addr, era } => query_era_rate(deps, pool_addr, era),
         QueryMsg::UnbondingSeconds { remote_denom } => query_unbonding_seconds(deps, remote_denom),
+        QueryMsg::Decimals { remote_denom } => query_decimals(deps, remote_denom),
+        QueryMsg::QueryIds { pool_addr } => query_ids(deps, pool_addr),
     }
 }
 
@@ -154,6 +157,10 @@ pub fn execute(
             remote_denom,
             unbonding_seconds,
         } => execute_config_unbonding_seconds(deps, info, remote_denom, unbonding_seconds),
+        ExecuteMsg::ConfigDecimals {
+            remote_denom,
+            decimals,
+        } => execute_config_decimals(deps, info, remote_denom, decimals),
         ExecuteMsg::OpenChannel {
             pool_addr,
             closed_channel_id,
@@ -198,10 +205,9 @@ pub fn execute(
             neutron_address,
             pool_addr,
         } => execute_stake_lsm(deps, env, info, neutron_address, pool_addr),
-        ExecuteMsg::UpdateIcqUpdatePeriod {
-            pool_addr,
-            new_update_period,
-        } => update_icq_update_period(deps, info, pool_addr, new_update_period),
+        ExecuteMsg::UpdateIcqUpdatePeriod { pool_addr } => {
+            update_icq_update_period(deps, info, pool_addr)
+        }
     }
 }
 

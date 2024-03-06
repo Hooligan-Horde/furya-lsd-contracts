@@ -50,7 +50,7 @@ pub fn execute_pool_update_validator(
         let stake_amount = delegation.amount.amount;
 
         if stake_amount.is_zero() {
-            continue;
+            break;
         }
 
         let any_msg = gen_redelegate_txs(
@@ -85,6 +85,7 @@ pub fn execute_pool_update_validator(
                 port_id: pool_ica_info.ctrl_port_id,
                 pool_addr: pool_ica_info.ica_addr.clone(),
                 message: new_validators
+                    .clone()
                     .into_iter()
                     .map(|index| index.to_string())
                     .collect::<Vec<String>>()
@@ -100,6 +101,7 @@ pub fn execute_pool_update_validator(
         pool_info.validator_update_status = ValidatorUpdateStatus::WaitQueryUpdate;
     }
 
+    pool_info.validator_addrs = new_validators;
     POOLS.save(deps.storage, pool_addr.clone(), &pool_info)?;
 
     Ok(resp)

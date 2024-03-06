@@ -8,7 +8,9 @@ use neutron_sdk::{
     },
 };
 
-use crate::state::{EraSnapshot, IcaInfo, IcaInfos, PoolInfo, QueryKind, Stack, UnstakeInfo};
+use crate::state::{
+    EraSnapshot, IcaInfo, IcaInfos, PoolInfo, QueryIds, QueryKind, Stack, UnstakeInfo,
+};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -63,6 +65,10 @@ pub enum QueryMsg {
     EraRate { pool_addr: String, era: u64 },
     #[returns(u64)]
     UnbondingSeconds { remote_denom: String },
+    #[returns(u8)]
+    Decimals { remote_denom: String },
+    #[returns(QueryIds)]
+    QueryIds { pool_addr: String },
 }
 
 #[cw_serde]
@@ -118,6 +124,10 @@ pub enum ExecuteMsg {
     ConfigUnbondingSeconds {
         remote_denom: String,
         unbonding_seconds: Option<u64>,
+    },
+    ConfigDecimals {
+        remote_denom: String,
+        decimals: Option<u8>,
     },
     OpenChannel {
         pool_addr: String,
@@ -177,7 +187,6 @@ pub enum ExecuteMsg {
     },
     UpdateIcqUpdatePeriod {
         pool_addr: String,
-        new_update_period: u64,
     },
 }
 
