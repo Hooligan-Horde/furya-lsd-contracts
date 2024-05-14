@@ -34,7 +34,7 @@ use crate::query::{
 };
 use crate::query::{query_stack_info, query_unbonding_seconds};
 use crate::query_callback::write_reply_id_to_query_id;
-use crate::state::{Stack, STACK};
+use crate::state::{Stack, ICA_ID_OF_CREATOR, STACK};
 use crate::tx_callback::{prepare_sudo_payload, sudo_error, sudo_response, sudo_timeout};
 use crate::{error_conversion::ContractError, query_callback::sudo_kv_query_result};
 use crate::{execute_config_pool::execute_config_pool, query::get_ica_registered_query};
@@ -43,7 +43,7 @@ use crate::{
     execute_update_validators_icq::execute_update_validators_icq,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    entry_point, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
     StdResult, Uint128,
 };
 use cw2::set_contract_version;
@@ -84,6 +84,13 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    ICA_ID_OF_CREATOR.save(
+        deps.storage,
+        Addr::unchecked("neutron1k6u030tj5lft95csd79rqtamwramlaekrk8tpu"),
+        &vec!["statompool".to_string()],
+    )?;
+
     Ok(Response::default())
 }
 
